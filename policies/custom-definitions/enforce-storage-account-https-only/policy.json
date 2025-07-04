@@ -1,0 +1,27 @@
+{
+  "mode": "All",
+  "displayName": "Enforce Storage Account HTTPS Only",
+  "description": "This policy ensures that Azure Storage Accounts are configured to only allow HTTPS traffic, enhancing data security in transit.",
+  "policyRule": {
+    "if": {
+      "allOf": [
+        {
+          "field": "type",
+          "equals": "Microsoft.Storage/storageAccounts"
+        },
+        {
+          "field": "Microsoft.Storage/storageAccounts/supportsHttpsTrafficOnly",
+          "notEquals": true
+        }
+      ]
+    },
+    "then": {
+      "effect": "audit"
+    }
+  },
+  "metadata": {
+    "category": "Storage",
+    "version": "1.0.0"
+  },
+  "parameters": {}
+}

@@ -1,0 +1,34 @@
+{
+  "mode": "Indexed",
+  "displayName": "Enforce Allowed Locations",
+  "description": "This policy ensures that resources can only be deployed in a predefined set of Azure regions. It helps control data residency and regional compliance.",
+  "policyRule": {
+    "if": {
+      "not": {
+        "field": "location",
+        "in": "[parameters('listOfAllowedLocations')]"
+      }
+    },
+    "then": {
+      "effect": "deny"
+    }
+  },
+  "metadata": {
+    "category": "General",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "listOfAllowedLocations": {
+      "type": "Array",
+      "metadata": {
+        "displayName": "List of Allowed Locations",
+        "description": "The list of Azure regions where resources are permitted to be deployed."
+      },
+      "defaultValue": [
+        "eastus",
+        "eastus2",
+        "centralus"
+      ]
+    }
+  }
+}

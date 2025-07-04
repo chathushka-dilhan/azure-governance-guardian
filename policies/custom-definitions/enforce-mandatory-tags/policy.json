@@ -1,0 +1,19 @@
+{
+  "mode": "Indexed",
+  "displayName": "Enforce Mandatory 'Environment' Tag",
+  "description": "Ensures all resources have an 'Environment' tag. This policy is set to audit, allowing non-compliant resources to be created but flagged.",
+  "policyRule": {
+    "if": {
+      "field": "tags['Environment']",
+      "exists": false
+    },
+    "then": {
+      "effect": "audit"
+    }
+  },
+  "metadata": {
+    "category": "General",
+    "version": "1.0.0"
+  },
+  "parameters": {}
+}

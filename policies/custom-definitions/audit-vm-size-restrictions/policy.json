@@ -1,0 +1,41 @@
+{
+  "mode": "Indexed",
+  "displayName": "Audit VM Size Restrictions",
+  "description": "This policy audits Virtual Machines that are not using a predefined set of approved SKUs. It helps manage costs and standardize VM deployments.",
+  "policyRule": {
+    "if": {
+      "allOf": [
+        {
+          "field": "type",
+          "in": [
+            "Microsoft.Compute/virtualMachines",
+            "Microsoft.Compute/virtualMachineScaleSets"
+          ]
+        },
+        {
+          "not": {
+            "field": "Microsoft.Compute/virtualMachines/sku.name",
+            "in": "[parameters('listOfAllowedVMSKUs')]"
+          }
+        }
+      ]
+    },
+    "then": {
+      "effect": "audit"
+    }
+  },
+  "metadata": {
+    "category": "Compute",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "listOfAllowedVMSKUs": {
+      "type": "Array",
+      "metadata": {
+        "displayName": "List of Allowed VM SKUs",
+        "description": "The list of Virtual Machine SKUs that are permitted for deployment."
+      },
+      "defaultValue": []
+    }
+  }
+}

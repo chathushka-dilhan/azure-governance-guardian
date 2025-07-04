@@ -1,0 +1,64 @@
+{
+  "displayName": "Core Governance Initiative",
+  "description": "A set of core governance policies for the organization.",
+  "policyDefinitions": [
+    {
+      "policyDefinitionId": "enforce-mandatory-tags",
+      "policyDefinitionReferenceId": "mandatory-environment-tag",
+      "parameters": {}
+    },
+    {
+      "policyDefinitionId": "audit-vm-size-restrictions",
+      "policyDefinitionReferenceId": "audit-vm-sizes",
+      "parameters": {
+        "listOfAllowedVMSKUs": {
+          "value": [
+            "Standard_B1s",
+            "Standard_B2s",
+            "Standard_B4ms",
+            "Standard_D2s_v3",
+            "Standard_D4s_v3",
+            "Standard_E2s_v3",
+            "Standard_E4s_v3"
+          ]
+        }
+      }
+    },
+    {
+      "policyDefinitionId": "enforce-allowed-locations",
+      "policyDefinitionReferenceId": "allowed-locations",
+      "parameters": {
+        "listOfAllowedLocations": {
+          "value": [
+            "eastus",
+            "westus",
+            "centralus",
+            "northcentralus",
+            "southcentralus"
+          ]
+        }
+      }
+    },
+    {
+      "policyDefinitionId": "enforce-storage-account-https-only",
+      "policyDefinitionReferenceId": "storage-account-https-only",
+      "parameters": {}
+    },
+    {
+      "policyDefinitionId": "deny-public-ip-on-subnets",
+      "policyDefinitionReferenceId": "deny-public-ip",
+      "parameters": {
+        "listOfSubnetsWithoutPublicIP": {
+          "value": [
+            "/subscriptions/${data.azurerm_subscription.current.subscription_id}/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-core/subnets/subnet-sensitive",
+            "/subscriptions/${data.azurerm_subscription.current.subscription_id}/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-core/subnets/subnet-critical"
+          ]
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "category": "General",
+    "version": "1.0.0"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "mode": "All",
+  "displayName": "Deny Public IP on Specific Subnets",
+  "description": "This policy denies the creation of Public IP addresses on network interfaces within specified sensitive subnets. It helps enforce network segmentation and security.",
+  "policyRule": {
+    "if": {
+      "allOf": [
+        {
+          "field": "type",
+          "equals": "Microsoft.Network/networkInterfaces"
+        },
+        {
+          "count": {
+            "field": "Microsoft.Network/networkInterfaces/ipConfigurations[*].publicIPAddress.id",
+            "where": {
+              "field": "Microsoft.Network/networkInterfaces/ipConfigurations[*].subnet.id",
+              "in": "[parameters('listOfSubnetsWithoutPublicIP')]"
+            }
+          },
+          "greaterOrEquals": 1
+        }
+      ]
+    },
+    "then": {
+      "effect": "deny"
+    }
+  },
+  "metadata": {
+    "category": "Network",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "listOfSubnetsWithoutPublicIP": {
+      "type": "Array",
+      "metadata": {
+        "displayName": "List of Subnets Without Public IP",
+        "description": "The list of subnet resource IDs where Public IP addresses are not allowed."
+      },
+      "defaultValue": []
+    }
+  }
+}

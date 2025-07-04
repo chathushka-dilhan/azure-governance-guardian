@@ -1,0 +1,41 @@
+# Policy: Restrict Overly Permissive Network Security Group (NSG) Rules
+
+import "tfplan/v2" as tfplan
+
+# Optional parameters for specific ports to forbid from internet access
+# param forbidden_inbound_ports = [] # Example: [22, 3389, 8080]
+
+# Find all Network Security Group Rules in the plan
+all_nsg_rules = tfplan.resource_changes.filter_by_kind("azurerm_network_security_rule")
+
+# Rule to check for overly permissive inbound rules (e.g., allowing all traffic from internet)
+rule no_overly_permissive_inbound_rules {
+  all true for all_nsg_rules as _, r {
+    # Only check rules that are being created or updated
+    r.change.actions contains "create" or r.change.actions contains "update" ?
+      # Check if the rule is inbound, allows traffic, and has a source address prefix of '*' (any)
+      (r.change.after.direction == "Inbound" and
+       r.change.after.access == "Allow" and
+       (r.change.after.source_address_prefix == "*" or
+        (r.change.after.source_address_prefixes is "list" and "Internet" in r.change.after.source_address_prefixes)) and
+       # Check if it allows traffic to 'Any' port or a specific forbidden port
+       (r.change.after.destination_port_range == "*" or
+        (length(r.change.after.destination_port_ranges) > 0 and "*" in r.change.after.destination_port_ranges) or
+        (length(var.forbidden_inbound_ports) > 0 and
+         any true for var.forbidden_inbound_ports as _, forbidden_port {
+           # Check if a forbidden port is explicitly allowed or within a range
+           tostring(forbidden_port) == r.change.after.destination_port_range or
+           (length(r.change.after.destination_port_ranges) > 0 and tostring(forbidden_port) in r.change.after.destination_port_ranges)
+         })
+       )
+      ) ?
+        # If it's an overly permissive rule, then it's non-compliant
+        false :
+        # Otherwise, it's compliant for this check
+        true :
+      # If the rule is not being created/updated, it's compliant for this check
+      true
+  }
+}
+
+main = rule no_overly_permissive_inbound_rules

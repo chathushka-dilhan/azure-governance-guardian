@@ -1,0 +1,24 @@
+# Policy: Enforce System-Assigned Managed Identity for specific resources
+
+import "tfplan/v2" as tfplan
+
+# Find all Azure Function Apps and Automation Accounts in the plan that are being created or updated
+all_identity_enabled_resources = tfplan.resource_changes.filter(
+  func(r) {
+    return (r.change.actions contains "create" or r.change.actions contains "update") and
+           (r.type == "azurerm_function_app" or r.type == "azurerm_automation_account")
+  }
+)
+
+# Rule to check if System-Assigned Managed Identity is enabled
+rule check_managed_identity_assignment {
+  all true for all_identity_enabled_resources as _, r {
+    # Check if 'identity' block exists, is a list, has at least one entry,
+    # and its 'type' is 'SystemAssigned'.
+    r.change.after.identity is "list" and
+    length(r.change.after.identity) > 0 and
+    r.change.after.identity[0].type == "SystemAssigned"
+  }
+}
+
+main = rule check_managed_identity_assignment

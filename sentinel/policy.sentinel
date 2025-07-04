@@ -1,0 +1,85 @@
+# This is the main Sentinel policy file. It imports and evaluates
+# other specific policy files to enforce comprehensive governance.
+
+# Import the tfplan/v2 module for accessing Terraform plan data
+import "tfplan/v2" as tfplan
+
+# --- Policy Definitions ---
+# Each 'policy' block below refers to a separate Sentinel policy file.
+# These policies will be evaluated against the Terraform plan.
+
+# 1. Policy: Enforce Azure Resource Naming Conventions
+# Ensures that resources adhere to predefined naming standards.
+policy "azure_resource_naming_conventions" {
+  source = "azure-resource-naming-conventions.sentinel"
+  # Example parameters (uncomment and customize if needed in the policy file)
+  # param "resource_type_patterns" {
+  #   value = {
+  #     "azurerm_resource_group" = "^rg-[a-z0-9-]+$"
+  #     "azurerm_storage_account" = "^st[a-z0-9]{10,20}$"
+  #   }
+  #   type = map(string)
+  # }
+}
+
+# 2. Policy: Enforce Mandatory Tagging
+# Ensures that all critical resources have required tags (e.g., 'Environment', 'CostCenter', 'Project').
+policy "azure_policy_tagging" {
+  source = "azure-policy-tagging.sentinel"
+  param "required_tags" {
+    value = ["Environment", "CostCenter", "Project"] # Customize mandatory tags
+    type = list(string)
+  }
+}
+
+# 3. Policy: Restrict Overly Permissive Network Security Group (NSG) Rules
+# Prevents NSG rules that allow all inbound traffic from the internet to any port.
+policy "azure_network_security_group_rules" {
+  source = "azure-network-security-group-rules.sentinel"
+  # Example parameters (uncomment and customize if needed in the policy file)
+  # param "forbidden_inbound_ports" {
+  #   value = [22, 3389] # Common ports to restrict direct internet access
+  #   type = list(int)
+  # }
+}
+
+# 4. Policy: Restrict Azure Resource Location
+# Ensures resources are deployed only in approved Azure regions.
+policy "azure_resource_location_restriction" {
+  source = "azure-resource-location-restriction.sentinel"
+  param "allowed_locations" {
+    value = ["eastus", "eastus2", "westus2", "centralus"] # Customize allowed regions (lowercase)
+    type = list(string)
+  }
+}
+
+# 5. Policy: Enforce Storage Account Encryption and HTTPS Only
+# Ensures that Azure Storage Accounts enforce HTTPS-only traffic and use TLS 1.2 or higher.
+policy "azure_storage_encryption" {
+  source = "azure-storage-encryption.sentinel"
+}
+
+# 6. Policy: Restrict Azure VM SKUs
+# Limits the types of Virtual Machine SKUs that can be deployed for cost control or standardization.
+policy "azure_vm_sku_restriction" {
+  source = "azure-vm-sku-restriction.sentinel"
+  param "allowed_vm_skus" {
+    value = ["Standard_DS1_v2", "Standard_DS2_v2", "Standard_D2s_v3"] # Customize allowed SKUs
+    type = list(string)
+  }
+}
+
+# 7. Policy: Ensure Azure Function App VNet Integration
+# Ensures that Azure Function Apps are integrated with a Virtual Network for enhanced security and private access.
+policy "azure_function_app_vnet_integration" {
+  source = "azure-function-app-vnet-integration.sentinel"
+}
+
+# 8. Policy: Enforce Managed Identity Usage for Service Principals
+# Ensures that Azure Function Apps and Automation Accounts use System-Assigned Managed Identities
+# for secure access to other Azure resources, promoting least privilege.
+policy "azure_managed_identity_assignment" {
+  source = "azure-managed-identity-assignment.sentinel"
+}
+
+# You can add more policies here as needed for governance requirements.

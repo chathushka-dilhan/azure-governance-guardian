@@ -1,0 +1,23 @@
+# Policy: Enforce Storage Account Encryption and HTTPS Only
+
+import "tfplan/v2" as tfplan
+
+# Find all Azure Storage Accounts in the plan that are being created or updated
+all_storage_accounts = tfplan.resource_changes.filter(
+  func(r) {
+    return (r.change.actions contains "create" or r.change.actions contains "update") and
+           r.type == "azurerm_storage_account"
+  }
+)
+
+# Rule to check if storage account encryption (HTTPS Only) and minimum TLS version are enabled
+rule check_storage_encryption {
+  all true for all_storage_accounts as _, r {
+    # Ensure HTTPS-only traffic is enabled
+    r.change.after.enable_https_traffic_only is true and
+    # Ensure minimum TLS version is TLS1_2 or higher
+    (r.change.after.min_tls_version == "TLS1_2" or r.change.after.min_tls_version == "TLS1_3")
+  }
+}
+
+main = rule check_storage_encryption

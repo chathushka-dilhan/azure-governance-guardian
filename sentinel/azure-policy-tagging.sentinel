@@ -1,0 +1,31 @@
+# Policy: Enforce Mandatory Tagging for Azure Resources
+
+import "tfplan/v2" as tfplan
+
+# Parameters for required tags (passed from policy.sentinel)
+param required_tags
+
+# Find all creatable or updatable resources in the plan.
+# This ensures we only check resources that are being deployed or modified.
+all_creatable_updatable_resources = tfplan.resource_changes.filter(
+  func(r) { return r.change.actions contains "create" or r.change.actions contains "update" }
+)
+
+# Rule to check for mandatory tags on resources that are not being destroyed
+rule check_mandatory_tags {
+  all true for all_creatable_updatable_resources as _, r {
+    # Check if 'tags' attribute exists and is a map in the 'after' state
+    r.change.after.tags is "map" ?
+      # All required tags must be present in the resource's tags,
+      # and their values must be non-empty strings.
+      all true for required_tags as _, tag {
+        tag in keys(r.change.after.tags) and
+        r.change.after.tags[tag] is "string" and
+        length(r.change.after.tags[tag]) > 0
+      } :
+      # If 'tags' attribute does not exist or is not a map, it's non-compliant
+      false
+  }
+}
+
+main = rule check_mandatory_tags

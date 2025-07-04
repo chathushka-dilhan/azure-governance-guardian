@@ -1,0 +1,24 @@
+# Policy: Restrict Azure VM SKUs
+
+import "tfplan/v2" as tfplan
+
+# Parameters for allowed VM SKUs (passed from policy.sentinel)
+param allowed_vm_skus
+
+# Find all Azure Virtual Machines in the plan that are being created or updated
+all_vms = tfplan.resource_changes.filter(
+  func(r) {
+    return (r.change.actions contains "create" or r.change.actions contains "update") and
+           (r.type == "azurerm_linux_virtual_machine" or r.type == "azurerm_windows_virtual_machine")
+  }
+)
+
+# Rule to check if VM SKU is in the allowed list
+rule check_vm_sku {
+  all true for all_vms as _, r {
+    # Check if the VM's size (SKU) is in the allowed list
+    r.change.after.size in allowed_vm_skus
+  }
+}
+
+main = rule check_vm_sku

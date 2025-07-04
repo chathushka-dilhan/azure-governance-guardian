@@ -1,0 +1,49 @@
+# Policy: Enforce Azure Resource Naming Conventions
+
+import "tfplan/v2" as tfplan
+
+# Define naming patterns for different resource types.
+# This is a comprehensive example. Customize these patterns to fit your organization's standards.
+# Keys are Terraform resource types, values are regular expressions for the 'name' attribute.
+resource_naming_patterns = {
+  "azurerm_resource_group": "^rg-[a-z0-9-]+$",
+  "azurerm_storage_account": "^st[a-z0-9]{10,24}$", # Storage accounts have specific length requirements
+  "azurerm_virtual_network": "^vnet-[a-z0-9-]+$",
+  "azurerm_subnet": "^snet-[a-z0-9-]+$",
+  "azurerm_network_security_group": "^nsg-[a-z0-9-]+$",
+  "azurerm_public_ip": "^pip-[a-z0-9-]+$",
+  "azurerm_linux_virtual_machine": "^vm-[a-z0-9-]+$",
+  "azurerm_windows_virtual_machine": "^vm-[a-z0-9-]+$",
+  "azurerm_function_app": "^func-[a-z0-9-]+$",
+  "azurerm_app_service_plan": "^asp-[a-z0-9-]+$",
+  "azurerm_automation_account": "^auto-[a-z0-9-]+$",
+  "azurerm_log_analytics_workspace": "^log-[a-z0-9-]+$",
+  "azurerm_logic_app_workflow": "^logic-[a-z0-9-]+$",
+  "azurerm_key_vault": "^kv-[a-z0-9-]+$",
+  "azurerm_container_registry": "^acr-[a-z0-9]+$",
+  "azurerm_kubernetes_cluster": "^aks-[a-z0-9-]+$",
+  "azurerm_sql_server": "^sql-[a-z0-9-]+$",
+  "azurerm_sql_database": "^db-[a-z0-9-]+$",
+  # Add more resource types and their patterns as needed
+}
+
+# Find all resources in the plan that are being created or updated
+all_creatable_updatable_resources = tfplan.resource_changes.filter(
+  func(r) { return r.change.actions contains "create" or r.change.actions contains "update" }
+)
+
+# Rule to check naming conventions for applicable resources
+rule check_naming_conventions {
+  all true for all_creatable_updatable_resources as _, r {
+    # Check if the resource type is in our defined naming patterns
+    r.type in keys(resource_naming_patterns) ?
+      # If yes, check if the resource's 'name' attribute matches the pattern
+      # Use `r.change.after.name` to get the name after the change
+      r.change.after.name matches resource_naming_patterns[r.type] :
+      # If no pattern is defined for this resource type, it's considered compliant for this check.
+      # You might want a separate policy to enforce that *all* resource types have naming patterns.
+      true
+  }
+}
+
+main = rule check_naming_conventions

@@ -1,0 +1,26 @@
+# Policy: Restrict Azure Resource Location
+
+import "tfplan/v2" as tfplan
+
+# Parameters for allowed locations (passed from policy.sentinel)
+# Ensure these are always lowercase in the parameter value.
+param allowed_locations
+
+# Find all resources in the plan that have a 'location' attribute
+# and are being created or updated.
+all_locatable_resources = tfplan.resource_changes.filter(
+  func(r) {
+    return (r.change.actions contains "create" or r.change.actions contains "update") and
+           r.change.after.location is "string"
+  }
+)
+
+# Rule to check if resource location is in the allowed list
+rule check_resource_location {
+  all true for all_locatable_resources as _, r {
+    # Convert the resource's location to lowercase for case-insensitive comparison
+    lower(r.change.after.location) in allowed_locations
+  }
+}
+
+main = rule check_resource_location

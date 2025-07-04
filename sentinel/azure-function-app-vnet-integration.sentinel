@@ -1,0 +1,25 @@
+# Policy: Enforce Azure Function App VNet Integration
+
+import "tfplan/v2" as tfplan
+
+# Find all Azure Function Apps in the plan that are being created or updated
+all_function_apps = tfplan.resource_changes.filter(
+  func(r) {
+    return (r.change.actions contains "create" or r.change.actions contains "update") and
+           r.type == "azurerm_function_app"
+  }
+)
+
+# Rule to check if Function App has VNet integration configured
+rule check_function_app_vnet_integration {
+  all true for all_function_apps as _, r {
+    # Check if 'vnet_integration' block exists, is a list, has at least one entry,
+    # and that entry has a non-empty 'subnet_id'.
+    r.change.after.vnet_integration is "list" and
+    length(r.change.after.vnet_integration) > 0 and
+    r.change.after.vnet_integration[0].subnet_id is "string" and
+    length(r.change.after.vnet_integration[0].subnet_id) > 0
+  }
+}
+
+main = rule check_function_app_vnet_integration

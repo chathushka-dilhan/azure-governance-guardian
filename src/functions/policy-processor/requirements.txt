@@ -1,0 +1,5 @@
+azure-functions
+azure-identity
+azure-mgmt-resourcegraph
+azure-mgmt-automation
+requests
